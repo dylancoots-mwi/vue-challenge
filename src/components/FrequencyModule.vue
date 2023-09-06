@@ -67,27 +67,52 @@
         </v-col>
       </v-row>
 
-      <v-row class="d-flex align-center justify-center">
+      <v-row class="d-flex align-center justify-start">
         <v-col cols="auto">
-          <v-label text="select frequency" />
-          <v-select :model="frequency" :items="frequencies" variant="outlined"/>
+          <v-select v-model="frequency" :items="frequencies" variant="outlined" label="select frequency"/>
         </v-col>
-        <v-col cols="auto">
+        <v-col>
           <v-label text="start date" />
-          <v-date-time-picker :model="startDate"/>
+          <v-date-time-picker
+            v-model="startDate"
+            :is-24="false"
+            auto-apply
+            :close-on-auto-apply="false"
+            :clearable="false"
+            time-picker-inline/>
         </v-col>
-        <v-col cols="auto">
+        <v-col>
           <v-label text="end date" />
-          <v-date-time-picker :model="endDate"/>
+          <v-date-time-picker
+            v-model="endDate"
+            :is-24="false"
+            auto-apply
+            :close-on-auto-apply="false"
+            :clearable="false"
+            time-picker-inline/>
         </v-col>
       </v-row>
-
+      <v-row v-if="frequency !== 'never'" class="d-flex align-center justify-start">
+        <v-col cols="auto">
+          <v-select v-model="timeType" :items="timeTypes" variant="outlined" label="time selection type"/>
+        </v-col>
+        <v-col>
+          <v-select v-model="increment" :items="increments" variant="outlined" label="increment (minutes)"/>
+        </v-col>
+      </v-row>
+      <v-row class="d-flex align-center justify-center">
+        <v-col>
+          <div class="text-center">
+            <p>{{ output }}</p>
+          </div>
+        </v-col>
+      </v-row>
     </v-responsive>
   </v-container>
 </template>
 
 <script setup>
-  import {ref} from 'vue'
+  import {computed, ref} from 'vue'
 
   const frequencies = ['never', 'daily', 'weekly', 'monthly', 'yearly'];
   const timeTypes = ['incremental', 'specific'];
@@ -97,6 +122,18 @@
   const timeType = ref(timeTypes[0]);
   const startDate = ref(new Date());
   const endDate = ref(new Date());
+  const increment = ref(increments[0]);
+
+  const output = computed(() => {
+    if (frequency.value === 'never') {
+      return 'no events';
+    }
+    const getNumEvents = () => {
+      let events = 0;
+      return events;
+    }
+    return `${frequency.value}, starting on ${startDate.value.toLocaleDateString()}, ending on ${endDate.value.toLocaleDateString()} (${getNumEvents()} events would be created)`;
+  })
 
 
   console.log(increments, startDate);

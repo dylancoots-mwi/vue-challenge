@@ -28,6 +28,6 @@ export default createVuetify({
     },
   },
   components: {
-    'v-date-time-picker': VueDatePicker
+    'v-date-time-picker': VueDatePicker,
   }
 })
