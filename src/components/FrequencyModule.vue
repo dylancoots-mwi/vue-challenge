@@ -130,13 +130,21 @@
   const frequency = ref(frequencies[0]);
   const timeType = ref(timeTypes[0]);
   const startDate = ref(new Date());
-  const startTime = ref(new Date());
+  const startTime = ref({hours: 0, minutes: 0});
   const endDate = ref(new Date());
-  const endTime = ref(new Date());
-  const increment = ref(0);
+  const endTime = ref({hours: 0, minutes: 0});
+  const increment = ref(5);
   const weeklyOn = ref(days[0]);
   const numOfWeeks = ref(1);
   const specificTimeRanges = ref([{ start: '00:00', end: '00:00' }]);
+
+  const parsedStartTime = computed(() => {
+    return new Date(startDate.value.getFullYear(), startDate.value.getMonth(), startDate.value.getDate(), startTime.value.hours, startTime.value.minutes);
+  })
+
+  const parsedEndTime = computed(() => {
+    return new Date(endDate.value.getFullYear(), endDate.value.getMonth(), endDate.value.getDate(), endTime.value.hours, endTime.value.minutes);
+  })
 
 
   const output = computed(() => {
@@ -144,31 +152,32 @@
       return 'no events';
     }
 
-    const diffHours = (start, end) =>
-      (new Date(`1970-01-01T${end}Z`).getTime() -
-        new Date(`1970-01-01T${start}Z`).getTime()) /
-      (1000 * 60 * 60);
+    const diffHours = (start, end) => Math.ceil((end - start) / (1000 * 60 * 60));
 
     const getNumEvents = () => {
       let events = 0;
-      let diffDays =
-        (endDate.value.getTime() - startDate.value.getTime()) /
-        (1000 * 60 * 60 * 24);
+      let diffDays = Math.ceil((endDate.value.getTime() - startDate.value.getTime()) / (1000 * 60 * 60 * 24));
+
+      console.log('days: ', diffDays);
+
       if (timeType.value === 'incremental') {
-        let incDiffHours = diffHours(startDate.value, endDate.value);
-        let eventsPerDay = Math.floor(incDiffHours / (increment.value / 60));
-        events = eventsPerDay * diffDays;
+        let incDiffHours = diffHours(parsedStartTime.value.getTime(), parsedEndTime.value.getTime());
+        console.log('incDiffHours: ', incDiffHours);
+        events = ((60 / increment.value) * incDiffHours);
       } else {
         for (const range of specificTimeRanges.value) {
-          let rangeDiffHours = diffHours(range.start, range.end);
+          let rangeDiffHours = diffHours(range.start.getTime(), range.end.getTime());
           events += rangeDiffHours * diffDays;
         }
       }
+
       return events || 0;
     };
 
     return `${frequency.value} events, starting on ${startDate.value.toLocaleDateString()}, ending on ${endDate.value.toLocaleDateString()} (${getNumEvents()} events would be created)`;
   });
+
+  // console.log('parsedStartTime: ', parsedStartTime.value);
 
   const addSpecificTimeRange = () => specificTimeRanges.value.push({ start: '00:00', end: '00:00' });
   const removeSpecificTimeRange = (index) => specificTimeRanges.value.splice(index, 1);
