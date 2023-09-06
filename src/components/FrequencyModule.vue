@@ -10,60 +10,11 @@
       <div class="py-14" />
 
       <v-row class="d-flex align-center justify-center">
-        <v-col cols="auto">
-          <v-btn
-            href="https://vuetifyjs.com/components/all/"
-            min-width="164"
-            rel="noopener noreferrer"
-            target="_blank"
-            variant="text"
-          >
-            <v-icon
-              icon="mdi-view-dashboard"
-              size="large"
-              start
-            />
-
-            Components
-          </v-btn>
-        </v-col>
-
-        <v-col cols="auto">
-          <v-btn
-            color="primary"
-            href="https://vuetifyjs.com/introduction/why-vuetify/#feature-guides"
-            min-width="228"
-            rel="noopener noreferrer"
-            size="x-large"
-            target="_blank"
-            variant="flat"
-          >
-            <v-icon
-              icon="mdi-speedometer"
-              size="large"
-              start
-            />
-
-            Get Started
-          </v-btn>
-        </v-col>
-
-        <v-col cols="auto">
-          <v-btn
-            href="https://community.vuetifyjs.com/"
-            min-width="164"
-            rel="noopener noreferrer"
-            target="_blank"
-            variant="text"
-          >
-            <v-icon
-              icon="mdi-account-group"
-              size="large"
-              start
-            />
-
-            Community
-          </v-btn>
+        <v-col>
+          <div class="text-center">
+            <p>{{ output }}</p>
+          </div>
+          <hr class="mt-5"/>
         </v-col>
       </v-row>
 
@@ -74,20 +25,18 @@
         <v-col>
           <v-date-time-picker
             v-model="startDate"
-            :is-24="false"
             auto-apply
             :close-on-auto-apply="false"
             :clearable="false"
-            time-picker-inline/>
+            :enable-time-picker="false"/>
         </v-col>
         <v-col>
           <v-date-time-picker
             v-model="endDate"
-            :is-24="false"
             auto-apply
             :close-on-auto-apply="false"
             :clearable="false"
-            time-picker-inline/>
+            :enable-time-picker="false"/>
         </v-col>
       </v-row>
       <v-row v-if="frequency === 'weekly'">
@@ -118,21 +67,54 @@
             variant="outlined"
             label="time selection type"/>
         </v-col>
-        <v-col>
-          <v-select
+        <v-col cols="auto">
+          <v-text-field
+            v-if="timeType === 'incremental'"
             v-model="increment"
-            :items="increments"
             label="increment (minutes)"
+            step="5"
+            type="number"
             variant="outlined"/>
         </v-col>
+        <template v-if="timeType === 'incremental'">
+          <v-col>
+            <v-date-time-picker
+              v-model="startTime"
+              auto-apply
+              :close-on-auto-apply="false"
+              :clearable="false"
+              time-picker
+              :is-24="false"
+            />
+          </v-col>
+          <v-col>
+            <v-date-time-picker
+              v-model="endTime"
+              auto-apply
+              :close-on-auto-apply="false"
+              :clearable="false"
+              time-picker
+              :is-24="false"
+            />
+          </v-col>
+        </template>
       </v-row>
-      <v-row class="d-flex align-center justify-center">
-        <v-col>
-          <div class="text-center">
-            <p>{{ output }}</p>
-          </div>
-        </v-col>
-      </v-row>
+      <template v-if="timeType === 'specific'">
+        <hr class="mb-5"/>
+        <v-row>
+          <v-col cols="12">
+            <v-btn variant="outlined" text="add time" @click="addSpecificTimeRange" color="green"/>
+          </v-col>
+        </v-row>
+        <v-row v-for="(range, index) in specificTimeRanges">
+          <v-time-range/>
+          <v-col cols="auto">
+            <v-btn variant="tonal" @click="() => removeSpecificTimeRange(index)">
+              <v-icon icon="mdi-minus-circle" color="red"/>
+            </v-btn>
+          </v-col>
+        </v-row>
+      </template>
     </v-responsive>
   </v-container>
 </template>
@@ -141,29 +123,54 @@
   import {computed, ref} from 'vue'
 
   const frequencies = ['never', 'daily', 'weekly', 'monthly', 'yearly'];
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const months = ['january','february','march','april','may','june','july','august','september','october','november', 'december'];
   const timeTypes = ['incremental', 'specific'];
-  const increments = Array.from({length: 11}, (_, i) => 5 + i * 5);
   // reactive state
   const frequency = ref(frequencies[0]);
   const timeType = ref(timeTypes[0]);
   const startDate = ref(new Date());
+  const startTime = ref(new Date());
   const endDate = ref(new Date());
-  const increment = ref(increments[0]);
+  const endTime = ref(new Date());
+  const increment = ref(0);
   const weeklyOn = ref(days[0]);
   const numOfWeeks = ref(1);
+  const specificTimeRanges = ref([{ start: '00:00', end: '00:00' }]);
+
 
   const output = computed(() => {
     if (frequency.value === 'never') {
       return 'no events';
     }
+
+    const diffHours = (start, end) =>
+      (new Date(`1970-01-01T${end}Z`).getTime() -
+        new Date(`1970-01-01T${start}Z`).getTime()) /
+      (1000 * 60 * 60);
+
     const getNumEvents = () => {
       let events = 0;
-      return events;
-    }
-    return `${frequency.value}, starting on ${startDate.value.toLocaleDateString()}, ending on ${endDate.value.toLocaleDateString()} (${getNumEvents()} events would be created)`;
-  })
+      let diffDays =
+        (endDate.value.getTime() - startDate.value.getTime()) /
+        (1000 * 60 * 60 * 24);
+      if (timeType.value === 'incremental') {
+        let incDiffHours = diffHours(startDate.value, endDate.value);
+        let eventsPerDay = Math.floor(incDiffHours / (increment.value / 60));
+        events = eventsPerDay * diffDays;
+      } else {
+        for (const range of specificTimeRanges.value) {
+          let rangeDiffHours = diffHours(range.start, range.end);
+          events += rangeDiffHours * diffDays;
+        }
+      }
+      return events || 0;
+    };
 
+    return `${frequency.value} events, starting on ${startDate.value.toLocaleDateString()}, ending on ${endDate.value.toLocaleDateString()} (${getNumEvents()} events would be created)`;
+  });
 
-  console.log(increments, startDate);
+  const addSpecificTimeRange = () => specificTimeRanges.value.push({ start: '00:00', end: '00:00' });
+  const removeSpecificTimeRange = (index) => specificTimeRanges.value.splice(index, 1);
+
 </script>
