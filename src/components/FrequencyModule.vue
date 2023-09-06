@@ -68,11 +68,10 @@
       </v-row>
 
       <v-row class="d-flex align-center justify-start">
-        <v-col cols="auto">
+        <v-col cols="3">
           <v-select v-model="frequency" :items="frequencies" variant="outlined" label="select frequency"/>
         </v-col>
         <v-col>
-          <v-label text="start date" />
           <v-date-time-picker
             v-model="startDate"
             :is-24="false"
@@ -82,7 +81,6 @@
             time-picker-inline/>
         </v-col>
         <v-col>
-          <v-label text="end date" />
           <v-date-time-picker
             v-model="endDate"
             :is-24="false"
@@ -92,12 +90,40 @@
             time-picker-inline/>
         </v-col>
       </v-row>
-      <v-row v-if="frequency !== 'never'" class="d-flex align-center justify-start">
-        <v-col cols="auto">
-          <v-select v-model="timeType" :items="timeTypes" variant="outlined" label="time selection type"/>
+      <v-row v-if="frequency === 'weekly'">
+        <v-col>
+          <v-select
+            v-model="weeklyOn"
+            :items="days"
+            variant="outlined"
+            label="on days"
+            multiple/>
         </v-col>
         <v-col>
-          <v-select v-model="increment" :items="increments" variant="outlined" label="increment (minutes)"/>
+          <div>
+            <v-text-field
+              v-model="numOfWeeks"
+              label="every number of weeks"
+              min="1"
+              type="number"
+              variant="outlined"/>
+          </div>
+        </v-col>
+      </v-row>
+      <v-row v-if="frequency !== 'never'" class="d-flex align-center justify-start">
+        <v-col cols="auto">
+          <v-select
+            v-model="timeType"
+            :items="timeTypes"
+            variant="outlined"
+            label="time selection type"/>
+        </v-col>
+        <v-col>
+          <v-select
+            v-model="increment"
+            :items="increments"
+            label="increment (minutes)"
+            variant="outlined"/>
         </v-col>
       </v-row>
       <v-row class="d-flex align-center justify-center">
@@ -115,6 +141,7 @@
   import {computed, ref} from 'vue'
 
   const frequencies = ['never', 'daily', 'weekly', 'monthly', 'yearly'];
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
   const timeTypes = ['incremental', 'specific'];
   const increments = Array.from({length: 11}, (_, i) => 5 + i * 5);
   // reactive state
@@ -123,6 +150,8 @@
   const startDate = ref(new Date());
   const endDate = ref(new Date());
   const increment = ref(increments[0]);
+  const weeklyOn = ref(days[0]);
+  const numOfWeeks = ref(1);
 
   const output = computed(() => {
     if (frequency.value === 'never') {
