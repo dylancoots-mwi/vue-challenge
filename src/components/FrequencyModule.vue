@@ -169,7 +169,6 @@
     if (frequency.value === 'never') {
       return 'no events';
     }
-    console.log(endTime.value)
     const getNumEvents = () => {
       let diffDays = Math.ceil((endDate.value.getTime() - startDate.value.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
