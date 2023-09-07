@@ -107,6 +107,11 @@
           </v-col>
         </v-row>
         <v-row v-for="(range, index) in specificTimeRanges">
+          <v-col cols="auto">
+            <v-label>
+              Event {{index + 1}}
+            </v-label>
+          </v-col>
           <v-time-range @time-change="({value, type}) => updateSpecificTimeRange({value, type}, index)"/>
           <v-col cols="auto">
             <v-btn variant="tonal" @click="() => removeSpecificTimeRange(index)">
@@ -153,10 +158,7 @@
         const diffHours = Math.ceil(endTime.value.hours - startTime.value.hours);
         events = ((60 / increment.value) * diffHours) * diffDays;
       } else {
-        for (const range of specificTimeRanges.value) {
-          let diffHours = Math.ceil(range.end.hours - range.start.hours);
-          events += ((60 / increment.value) * diffHours) * diffDays;
-        }
+        events = specificTimeRanges.value.length * diffDays;
       }
       return events;
     };
