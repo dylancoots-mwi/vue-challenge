@@ -1,3 +1,6 @@
+<img width="933" alt="image" src="https://github.com/dylancoots-mwi/vue-challenge/assets/58084190/06502c01-e899-4b71-a6ba-91cf3c65f9b5">
+
+
 # base
 
 ## Project setup
