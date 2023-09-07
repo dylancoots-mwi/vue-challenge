@@ -7,7 +7,7 @@
 
       <h1 class="text-h2 font-weight-bold">Vuetify</h1>
 
-      <div class="py-14" />
+      <div class="py-7" />
 
       <v-row class="d-flex align-center justify-center">
         <v-col>
@@ -18,25 +18,35 @@
         </v-col>
       </v-row>
 
-      <v-row class="d-flex align-center justify-start">
+      <v-row class="d-flex justify-start pr-5">
         <v-col cols="3">
           <v-select v-model="frequency" :items="frequencies" variant="outlined" label="select frequency"/>
         </v-col>
         <v-col>
-          <v-date-time-picker
-            v-model="startDate"
-            auto-apply
-            :close-on-auto-apply="false"
-            :clearable="false"
-            :enable-time-picker="false"/>
+          <v-row>
+            <v-label>
+              start
+            </v-label>
+            <v-date-time-picker
+              v-model="startDate"
+              auto-apply
+              :close-on-auto-apply="false"
+              :clearable="false"
+              :enable-time-picker="false"/>
+          </v-row>
         </v-col>
         <v-col>
-          <v-date-time-picker
-            v-model="endDate"
-            auto-apply
-            :close-on-auto-apply="false"
-            :clearable="false"
-            :enable-time-picker="false"/>
+          <v-row>
+            <v-label>
+              end
+            </v-label>
+            <v-date-time-picker
+              v-model="endDate"
+              auto-apply
+              :close-on-auto-apply="false"
+              :clearable="false"
+              :enable-time-picker="false"/>
+          </v-row>
         </v-col>
       </v-row>
       <v-row v-if="frequency === 'weekly'">
@@ -59,15 +69,15 @@
           </div>
         </v-col>
       </v-row>
-      <v-row v-if="frequency !== 'never'" class="d-flex align-center justify-start">
-        <v-col cols="auto">
+      <v-row v-if="frequency !== 'never'" class="d-flex justify-start pr-5">
+        <v-col>
           <v-select
             v-model="timeType"
             :items="timeTypes"
             variant="outlined"
             label="time selection type"/>
         </v-col>
-        <v-col cols="auto">
+        <v-col>
           <v-text-field
             v-if="timeType === 'incremental'"
             v-model="increment"
@@ -78,24 +88,34 @@
         </v-col>
         <template v-if="timeType === 'incremental'">
           <v-col>
-            <v-date-time-picker
-              v-model="startTime"
-              auto-apply
-              :close-on-auto-apply="false"
-              :clearable="false"
-              time-picker
-              :is-24="false"
-            />
+            <v-row>
+              <v-label>
+                start
+              </v-label>
+              <v-date-time-picker
+                v-model="startTime"
+                auto-apply
+                :close-on-auto-apply="false"
+                :clearable="false"
+                time-picker
+                :is-24="false"
+              />
+            </v-row>
           </v-col>
           <v-col>
-            <v-date-time-picker
-              v-model="endTime"
-              auto-apply
-              :close-on-auto-apply="false"
-              :clearable="false"
-              time-picker
-              :is-24="false"
-            />
+            <v-row>
+              <v-label>
+                end
+              </v-label>
+              <v-date-time-picker
+                v-model="endTime"
+                auto-apply
+                :close-on-auto-apply="false"
+                :clearable="false"
+                time-picker
+                :is-24="false"
+              />
+            </v-row>
           </v-col>
         </template>
       </v-row>
@@ -127,9 +147,8 @@
 <script setup>
   import {computed, ref} from 'vue'
 
-  const frequencies = ['never', 'daily', 'weekly', 'monthly', 'yearly'];
+  const frequencies = ['never', 'daily', 'weekly'];
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const months = ['january','february','march','april','may','june','july','august','september','october','november','december'];
   const timeTypes = ['incremental', 'specific'];
   // reactive state
   const frequency = ref(frequencies[0]);
@@ -139,7 +158,7 @@
   const endDate = ref(new Date());
   const endTime = ref({hours: 0, minutes: 0});
   const increment = ref(5);
-  const weeklyOn = ref(days[0]);
+  const weeklyOn = ref([days[0]]);
   const numOfWeeks = ref(1);
   const specificTimeRanges = ref([{
     start: {hours: 0, minutes: 0},
@@ -153,14 +172,30 @@
     console.log(endTime.value)
     const getNumEvents = () => {
       let diffDays = Math.ceil((endDate.value.getTime() - startDate.value.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      let events = 0;
-      if (timeType.value === 'incremental') {
-        const diffHours = Math.ceil(endTime.value.hours - startTime.value.hours);
-        events = ((60 / increment.value) * diffHours) * diffDays;
-      } else {
-        events = specificTimeRanges.value.length * diffDays;
+
+      if (frequency.value === 'daily') {
+        if (timeType.value === 'incremental') {
+          const diffHours = Math.ceil(endTime.value.hours - startTime.value.hours);
+          return ((60 / increment.value) * diffHours) * diffDays;
+        } else {
+          return specificTimeRanges.value.length * diffDays;
+        }
       }
-      return events;
+
+      if (frequency.value === 'weekly') {
+        let events = 0;
+        for (let week = 1; week <= numOfWeeks.value; week++) {
+          for (let day = 1; day <= weeklyOn.value?.length; day++) {
+            if (timeType.value === 'incremental') {
+              const diffHours = Math.ceil(endTime.value.hours - startTime.value.hours);
+              events += ((60 / increment.value) * diffHours) * diffDays;
+            } else {
+              events += specificTimeRanges.value.length * diffDays;
+            }
+          }
+        }
+        return events
+      }
     };
 
     return `${frequency.value} events, starting on ${startDate.value.toLocaleDateString()}, ending on ${endDate.value.toLocaleDateString()} (${getNumEvents()} events would be created)`;
