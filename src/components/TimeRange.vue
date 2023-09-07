@@ -7,6 +7,7 @@
       :clearable="false"
       time-picker
       :is-24="false"
+      @update:model-value="(value) => handleTimeChange(value, 'start')"
     />
   </v-col>
   <v-col>
@@ -17,6 +18,7 @@
       :clearable="false"
       time-picker
       :is-24="false"
+      @update:model-value="(value) => handleTimeChange(value, 'end')"
     />
   </v-col>
 </template>
@@ -24,10 +26,16 @@
 <script>
 export default {
   name: 'TimeRange',
+  emits: ['time-change'],
   data: () => ({
-    startTime: new Date(),
-    endTime: new Date()
-  })
+    startTime: {hours: 0, minutes: 0},
+    endTime: {hours: 0, minutes: 0}
+  }),
+  methods: {
+    handleTimeChange(value, type) {
+      this.$emit('time-change', { value, type });
+    }
+  }
 }
 </script>
 

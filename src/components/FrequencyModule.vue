@@ -107,7 +107,7 @@
           </v-col>
         </v-row>
         <v-row v-for="(range, index) in specificTimeRanges">
-          <v-time-range/>
+          <v-time-range @time-change="({value, type}) => updateSpecificTimeRange({value, type}, index)"/>
           <v-col cols="auto">
             <v-btn variant="tonal" @click="() => removeSpecificTimeRange(index)">
               <v-icon icon="mdi-minus-circle" color="red"/>
@@ -124,7 +124,7 @@
 
   const frequencies = ['never', 'daily', 'weekly', 'monthly', 'yearly'];
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const months = ['january','february','march','april','may','june','july','august','september','october','november', 'december'];
+  const months = ['january','february','march','april','may','june','july','august','september','october','november','december'];
   const timeTypes = ['incremental', 'specific'];
   // reactive state
   const frequency = ref(frequencies[0]);
@@ -136,50 +136,40 @@
   const increment = ref(5);
   const weeklyOn = ref(days[0]);
   const numOfWeeks = ref(1);
-  const specificTimeRanges = ref([{ start: '00:00', end: '00:00' }]);
-
-  const parsedStartTime = computed(() => {
-    return new Date(startDate.value.getFullYear(), startDate.value.getMonth(), startDate.value.getDate(), startTime.value.hours, startTime.value.minutes);
-  })
-
-  const parsedEndTime = computed(() => {
-    return new Date(endDate.value.getFullYear(), endDate.value.getMonth(), endDate.value.getDate(), endTime.value.hours, endTime.value.minutes);
-  })
-
+  const specificTimeRanges = ref([{
+    start: {hours: 0, minutes: 0},
+    end: {hours: 0, minutes: 0}
+  }]);
 
   const output = computed(() => {
     if (frequency.value === 'never') {
       return 'no events';
     }
-
-    const diffHours = (start, end) => Math.ceil((end - start) / (1000 * 60 * 60));
-
+    console.log(endTime.value)
     const getNumEvents = () => {
+      let diffDays = Math.ceil((endDate.value.getTime() - startDate.value.getTime()) / (1000 * 60 * 60 * 24)) + 1;
       let events = 0;
-      let diffDays = Math.ceil((endDate.value.getTime() - startDate.value.getTime()) / (1000 * 60 * 60 * 24));
-
-      console.log('days: ', diffDays);
-
       if (timeType.value === 'incremental') {
-        let incDiffHours = diffHours(parsedStartTime.value.getTime(), parsedEndTime.value.getTime());
-        console.log('incDiffHours: ', incDiffHours);
-        events = ((60 / increment.value) * incDiffHours);
+        const diffHours = Math.ceil(endTime.value.hours - startTime.value.hours);
+        events = ((60 / increment.value) * diffHours) * diffDays;
       } else {
         for (const range of specificTimeRanges.value) {
-          let rangeDiffHours = diffHours(range.start.getTime(), range.end.getTime());
-          events += rangeDiffHours * diffDays;
+          let diffHours = Math.ceil(range.end.hours - range.start.hours);
+          events += ((60 / increment.value) * diffHours) * diffDays;
         }
       }
-
-      return events || 0;
+      return events;
     };
 
     return `${frequency.value} events, starting on ${startDate.value.toLocaleDateString()}, ending on ${endDate.value.toLocaleDateString()} (${getNumEvents()} events would be created)`;
   });
 
-  // console.log('parsedStartTime: ', parsedStartTime.value);
-
-  const addSpecificTimeRange = () => specificTimeRanges.value.push({ start: '00:00', end: '00:00' });
+  const addSpecificTimeRange = () => specificTimeRanges.value.push({
+    start: {hours: 0, minutes: 0},
+    end: {hours: 0, minutes: 0}
+  });
   const removeSpecificTimeRange = (index) => specificTimeRanges.value.splice(index, 1);
+
+  const updateSpecificTimeRange = ({value, type}, index) => specificTimeRanges.value[index][type] = value;
 
 </script>
